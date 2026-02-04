@@ -1,16 +1,18 @@
-import { Bell, Volume2, VolumeX, Vibrate, Smartphone, AppWindow } from 'lucide-react';
+import React from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
-import { Label } from './ui/label';
-import { Switch } from './ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+  Modal,
+  View,
+  Text,
+  Switch,
+  StyleSheet,
+  Pressable,
+} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import {
+  Ionicons,
+} from '@expo/vector-icons'; // or react-native-vector-icons
+
 import { ScheduledRoute } from '../types/bus';
-import { Card } from './ui/card';
 
 interface StopAlertSetupProps {
   open: boolean;
@@ -43,152 +45,150 @@ export function StopAlertSetup({
   const inAppEnabled = schedule.inAppEnabled ?? true;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100">
-            Stop Alert Setup
-          </DialogTitle>
-          <DialogDescription>
-            Configure notifications for {lineName} to {stopName}
-          </DialogDescription>
-        </DialogHeader>
+    <Modal visible={open} animationType="slide" transparent>
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Stop Alert Setup</Text>
+            <Text style={styles.subtitle}>
+              Configure notifications for {lineName} to {stopName}
+            </Text>
+          </View>
 
-        <div className="space-y-4 py-4">
           {/* Master toggle */}
-          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-500 dark:border-blue-600">
-            <div className="flex-1">
-              <Label htmlFor="alerts-enabled" className="text-gray-900 dark:text-gray-100">
-                Enable Stop Alerts
-              </Label>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <View style={styles.cardPrimary}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Enable Stop Alerts</Text>
+              <Text style={styles.helper}>
                 Get notified when bus is approaching
-              </p>
-            </div>
+              </Text>
+            </View>
             <Switch
-              id="alerts-enabled"
-              checked={alertsEnabled}
-              onCheckedChange={(value) => updateSetting('alertsEnabled', value)}
+              value={alertsEnabled}
+              onValueChange={(value) =>
+                updateSetting('alertsEnabled', value)
+              }
             />
-          </div>
+          </View>
 
           {alertsEnabled && (
             <>
-              {/* Stops away selector */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <Label htmlFor="stops-before" className="text-gray-900 dark:text-gray-100">
-                  Notify me when bus is:
-                </Label>
-                <Select
-                  value={schedule.notifyStopsBefore.toString()}
-                  onValueChange={(value) => updateSetting('notifyStopsBefore', parseInt(value))}
+              {/* Stops before */}
+              <View style={styles.card}>
+                <Text style={styles.label}>Notify me when bus is:</Text>
+                <Picker
+                  selectedValue={schedule.notifyStopsBefore}
+                  onValueChange={(value) =>
+                    updateSetting('notifyStopsBefore', value)
+                  }
                 >
-                  <SelectTrigger id="stops-before" className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 stop before</SelectItem>
-                    <SelectItem value="2">2 stops before</SelectItem>
-                    <SelectItem value="3">3 stops before</SelectItem>
-                    <SelectItem value="4">4 stops before</SelectItem>
-                    <SelectItem value="5">5 stops before</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Notification type toggles */}
-              <Card>
-                <div className="p-3 space-y-3">
-                  <h4 className="text-gray-900 dark:text-gray-100">Notification Types</h4>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4 text-blue-500" />
-                      <Label htmlFor="push-enabled" className="text-gray-900 dark:text-gray-100">
-                        Push Notification
-                      </Label>
-                    </div>
-                    <Switch
-                      id="push-enabled"
-                      checked={pushEnabled}
-                      onCheckedChange={(value) => updateSetting('pushEnabled', value)}
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Picker.Item
+                      key={n}
+                      label={`${n} stop${n > 1 ? 's' : ''} before`}
+                      value={n}
                     />
-                  </div>
+                  ))}
+                </Picker>
+              </View>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AppWindow className="w-4 h-4 text-purple-500" />
-                      <Label htmlFor="inapp-enabled" className="text-gray-900 dark:text-gray-100">
-                        In-App Notification
-                      </Label>
-                    </div>
-                    <Switch
-                      id="inapp-enabled"
-                      checked={inAppEnabled}
-                      onCheckedChange={(value) => updateSetting('inAppEnabled', value)}
-                    />
-                  </div>
+              {/* Notification Types */}
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Notification Types</Text>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {soundEnabled ? (
-                        <Volume2 className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <VolumeX className="w-4 h-4 text-gray-400" />
-                      )}
-                      <Label htmlFor="sound-enabled" className="text-gray-900 dark:text-gray-100">
-                        Sound
-                      </Label>
-                    </div>
-                    <Switch
-                      id="sound-enabled"
-                      checked={soundEnabled}
-                      onCheckedChange={(value) => updateSetting('soundEnabled', value)}
-                    />
-                  </div>
+                <SettingRow
+                  icon="notifications-outline"
+                  label="Push Notification"
+                  value={pushEnabled}
+                  onChange={(v) => updateSetting('pushEnabled', v)}
+                />
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Vibrate className="w-4 h-4 text-orange-500" />
-                      <Label htmlFor="vibration-enabled" className="text-gray-900 dark:text-gray-100">
-                        Vibration
-                      </Label>
-                    </div>
-                    <Switch
-                      id="vibration-enabled"
-                      checked={vibrationEnabled}
-                      onCheckedChange={(value) => updateSetting('vibrationEnabled', value)}
-                    />
-                  </div>
-                </div>
-              </Card>
+                <SettingRow
+                  icon="apps-outline"
+                  label="In-App Notification"
+                  value={inAppEnabled}
+                  onChange={(v) => updateSetting('inAppEnabled', v)}
+                />
+
+                <SettingRow
+                  icon={soundEnabled ? 'volume-high-outline' : 'volume-mute-outline'}
+                  label="Sound"
+                  value={soundEnabled}
+                  onChange={(v) => updateSetting('soundEnabled', v)}
+                />
+
+                <SettingRow
+                  icon="phone-portrait-outline"
+                  label="Vibration"
+                  value={vibrationEnabled}
+                  onChange={(v) =>
+                    updateSetting('vibrationEnabled', v)
+                  }
+                />
+              </View>
 
               {/* Preview */}
-              <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg border-2 border-green-500 dark:border-green-600">
-                <div className="flex items-start gap-2">
-                  <Bell className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-gray-900 dark:text-gray-100 mb-1">
-                      Alert Preview
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      You will be notified <strong>{schedule.notifyStopsBefore} stop{schedule.notifyStopsBefore > 1 ? 's' : ''} before</strong> your stop via{' '}
-                      {[
-                        pushEnabled && 'push notification',
-                        inAppEnabled && 'in-app alert',
-                        soundEnabled && 'sound',
-                        vibrationEnabled && 'vibration',
-                      ]
-                        .filter(Boolean)
-                        .join(', ') || 'no methods selected'}.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <View style={styles.cardSuccess}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={20}
+                  color="#16a34a"
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Alert Preview</Text>
+                  <Text style={styles.helper}>
+                    You will be notified{' '}
+                    <Text style={{ fontWeight: '600' }}>
+                      {schedule.notifyStopsBefore} stop
+                      {schedule.notifyStopsBefore > 1 ? 's' : ''} before
+                    </Text>{' '}
+                    via{' '}
+                    {[
+                      pushEnabled && 'push notification',
+                      inAppEnabled && 'in-app alert',
+                      soundEnabled && 'sound',
+                      vibrationEnabled && 'vibration',
+                    ]
+                      .filter(Boolean)
+                      .join(', ') || 'no methods selected'}.
+                  </Text>
+                </View>
+              </View>
             </>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+
+          {/* Close */}
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => onOpenChange(false)}
+          >
+            <Text style={styles.closeText}>Done</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function SettingRow({
+  icon,
+  label,
+  value,
+  onChange,
+}: {
+  icon: string;
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <Ionicons name={icon as any} size={18} />
+        <Text style={styles.label}>{label}</Text>
+      </View>
+      <Switch value={value} onValueChange={onChange} />
+    </View>
   );
 }
